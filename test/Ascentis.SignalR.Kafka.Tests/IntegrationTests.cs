@@ -232,7 +232,7 @@ public class IntegrationTests
     }
 
     [TestMethod]
-    public async Task SendAllExcept()
+    public async Task SendAll_Except()
     {
         var connectionId = _connectionManager.Last().ConnectionId;
         await _connectionManager.First().InvokeAsync("SendAllExcept", new[] { connectionId }, _message);
@@ -340,7 +340,7 @@ public class IntegrationTests
     }
 
     [TestMethod]
-    public async Task SendGroupExcept()
+    public async Task SendGroup_Except()
     {
         var group = Guid.NewGuid().ToString();
         var groupConnections = GetRandomConnections(_connectionManager, GroupConnectionCount);
@@ -366,7 +366,7 @@ public class IntegrationTests
     }
 
     [TestMethod]
-    public async Task SendGroupNonExisting()
+    public async Task SendGroup_NonExisting()
     {
         var group = Guid.NewGuid().ToString();
             
@@ -376,7 +376,7 @@ public class IntegrationTests
     }
 
     [TestMethod]
-    public async Task SendOthersGroup()
+    public async Task SendGroup_OthersInGroup()
     {
         var group = Guid.NewGuid().ToString();
         var groupConnections = GetRandomConnections(_connectionManager, GroupConnectionCount);
@@ -479,7 +479,7 @@ public class IntegrationTests
     }
 
     [TestMethod]
-    public async Task SendGroupRemove()
+    public async Task SendGroup_Remove()
     {
         var group = Guid.NewGuid().ToString();
         var groupConnections = GetRandomConnections(_connectionManager, GroupConnectionCount);
@@ -519,7 +519,7 @@ public class IntegrationTests
     }
 
     [TestMethod]
-    public async Task SendGroupRemove_Remote()
+    public async Task SendGroup_RemoveRemote()
     {
         if (_ports.Length < 2)
         {
