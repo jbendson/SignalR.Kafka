@@ -288,8 +288,7 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
         var ack = _ackHandler.CreateAck(id);
         // Send Add/Remove Group to other servers and wait for an ack or timeout
         var message = _protocol.WriteGroupCommand(new GroupCommand(id, _serverName, action, groupName, connectionId));
-        await PublishAsync("manage-group", message);
-
+        await PublishAsync("group-mgmt", groupName, message);
         await ack;
     }
 
@@ -303,55 +302,7 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
         _producer?.Dispose();
         _consumer?.Dispose();
     }
-    /*
-    private async Task SubscribeToGroupManagementChannel()
-    {
-        var channel = await _bus!.SubscribeAsync(_channels.GroupManagement);
-        _consumer.Subscription.Add("");
-        channel.OnMessage(async channelMessage =>
-        {
-            try
-            {
-                var groupMessage = _protocol.ReadGroupCommand((byte[])channelMessage.Message);
-
-                var connection = _connections[groupMessage.ConnectionId];
-                if (connection == null)
-                {
-                    // user not on this server
-                    return Task.CompletedTask;
-                }
-
-                if (groupMessage.Action == GroupAction.Remove)
-                {
-                    await RemoveGroupAsyncCore(connection, groupMessage.GroupName);
-                }
-                else if (groupMessage.Action == GroupAction.Add)
-                {
-                    await AddGroupAsyncCore(connection, groupMessage.GroupName);
-                }
-
-                // Send an ack to the server that sent the original command.
-                await PublishAsync("ack", groupMessage.ServerName, _protocol.WriteAck(groupMessage.Id));
-            }
-            catch (Exception ex)
-            {
-                RedisLog.InternalMessageFailed(_logger, ex);
-            }
-        });
-    }
-
-    private async Task SubscribeToAckChannel()
-    {
-        // Create server specific channel in order to send an ack to a single server
-        var channel = await _bus!.SubscribeAsync(_channels.Ack(_serverName));
-        channel.OnMessage(channelMessage =>
-        {
-            var ackId = _protocol.ReadAck((byte[])channelMessage.Message);
-
-            _ackHandler.TriggerAck(ackId);
-        });
-    }
-    */
+    
     private void InitKafkaConnection(ConsumerConfig consumerConfig, ProducerConfig producerConfig)
     {
         if (_kafkaInitialized) 
@@ -376,7 +327,7 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
                     _logger.Log(logMessage.Level.ToLogLevel(), logMessage.Message);
                 });
             _consumer = new KafkaConsumer(consumerBuilder, _logger);
-            _consumer.Subscribe(new List<string> { "send-all", "send-conn", "send-group", "send-user" });
+            _consumer.Subscribe(new List<string> { "send-all", "send-conn", "send-group", "send-user", "ack", "group-mgmt" });
             _consumer.StartConsuming(async (result, cancellationToken) => await ConsumeMessages(result, cancellationToken));
             _kafkaInitialized = true;
         }
@@ -386,13 +337,49 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
         }
     }
 
-    private async Task SendConnectionInvocation(string connectionId, Invocation invocation, CancellationToken cancellationToken)
+    private async Task SendGroupManagementInvocation(ConsumeResult<string, byte[]> consumeResult)
     {
+        var groupMessage = _protocol.ReadGroupCommand(consumeResult.Message.Value);
+
+        var connection = _connections[groupMessage.ConnectionId];
+        if (connection == null)
+        {
+            // user not on this server
+            return;
+        }
+
+        switch (groupMessage.Action)
+        {
+            case GroupAction.Remove:
+                await RemoveGroupAsyncCore(connection, groupMessage.GroupName);
+                break;
+            case GroupAction.Add:
+                await AddGroupAsyncCore(connection, groupMessage.GroupName);
+                break;
+        }
+
+        await PublishAsync("ack", groupMessage.ServerName, _protocol.WriteAck(groupMessage.Id));
+    }
+
+    private void AckInvocation(ConsumeResult<string, byte[]> consumeResult)
+    {
+        if (!consumeResult.Message.Key.Equals(_serverName, StringComparison.Ordinal))
+            return;
+
+        var ackId = _protocol.ReadAck(consumeResult.Message.Value);
+        _ackHandler.TriggerAck(ackId);
+    }
+
+    private async Task SendConnectionInvocation(ConsumeResult<string, byte[]> consumeResult, CancellationToken cancellationToken)
+    {
+        var invocation = _protocol.ReadInvocation(consumeResult.Message.Value);
+        var connectionId = consumeResult.Message.Key;
         await _connections[connectionId].WriteAsync(invocation.Message, cancellationToken);
     }
 
-    private async Task SendAllInvocation(Invocation invocation, CancellationToken cancellationToken)
+    private async Task SendAllInvocation(ConsumeResult<string, byte[]> consumeResult, CancellationToken cancellationToken)
     {
+        var invocation = _protocol.ReadInvocation(consumeResult.Message.Value);
         var tasks = new List<Task>(_connections.Count);
 
         foreach (var connection in _connections)
@@ -409,8 +396,10 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
         await Task.WhenAll(tasks);
     }
 
-    private async Task SendGroupInvocation(string groupName, Invocation invocation, CancellationToken cancellationToken)
+    private async Task SendGroupInvocation(ConsumeResult<string, byte[]> consumeResult, CancellationToken cancellationToken)
     {
+        var invocation = _protocol.ReadInvocation(consumeResult.Message.Value);
+        var groupName = consumeResult.Message.Key;
         var connections = await _groups.GetSubscriptionAsync(groupName);
         if (connections == null)
             return;
@@ -428,8 +417,10 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
         await Task.WhenAll(tasks);
     }
 
-    private async Task SendUserInvocation(string userIdentifier, Invocation invocation, CancellationToken cancellationToken)
+    private async Task SendUserInvocation(ConsumeResult<string, byte[]> consumeResult, CancellationToken cancellationToken)
     {
+        var invocation = _protocol.ReadInvocation(consumeResult.Message.Value);
+        var userIdentifier = consumeResult.Message.Key;
         var connections = await _users.GetSubscriptionAsync(userIdentifier);
         if (connections == null)
             return;
@@ -446,20 +437,25 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
 
     private async Task ConsumeMessages(ConsumeResult<string, byte[]> consumeResult, CancellationToken cancellationToken)
     {
-        var invocation = _protocol.ReadInvocation(consumeResult.Message.Value);
         switch (consumeResult.Topic)
         {
             case "send-conn":
-                await SendConnectionInvocation(consumeResult.Message.Key, invocation, cancellationToken);
+                await SendConnectionInvocation(consumeResult, cancellationToken);
                 break;
             case "send-all":
-                await SendAllInvocation(invocation, cancellationToken);
+                await SendAllInvocation(consumeResult, cancellationToken);
                 break;
             case "send-group":
-                await SendGroupInvocation(consumeResult.Message.Key, invocation, cancellationToken);
+                await SendGroupInvocation(consumeResult, cancellationToken);
                 break;
             case "send-user":
-                await SendUserInvocation(consumeResult.Message.Key, invocation, cancellationToken);
+                await SendUserInvocation(consumeResult, cancellationToken);
+                break;
+            case "ack":
+                AckInvocation(consumeResult);
+                break;
+            case "group-mgmt":
+                await SendGroupManagementInvocation(consumeResult);
                 break;
         }
     }

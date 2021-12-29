@@ -12,7 +12,7 @@ namespace Ascentis.SignalR.Kafka.IntegrationTests;
 [TestClass]
 public class IntegrationTests
 {
-    private static readonly int[] _ports = new int[] { 5010, 5011 };
+    private static readonly int[] _ports = new int[] { 5010, 5011, 5012, 5013 };
     private const int RpcWait = 1000;
     private const int StartupWait = 5000;
     private const int ConnectionCount = 5;
@@ -277,6 +277,68 @@ public class IntegrationTests
         Assert.AreEqual(groupConnections.Count, _messageManager.LifetimeEnqueued());
     }
 
+
+    [TestMethod]
+    public async Task SendGroup_RemoteServer()
+    {
+        if (_ports.Length < 2)
+        {
+            Assert.Inconclusive("Test requires multiple servers");
+            return;
+        }
+
+        var group = Guid.NewGuid().ToString();
+        var invocationConnection = _connectionManager.First();
+        var remoteConnection = _connectionManager.Skip(1).Take(1).First();
+
+        Assert.AreNotEqual(_connectionManager.GetServerPort(invocationConnection), _connectionManager.GetServerPort(remoteConnection));
+
+        await invocationConnection.InvokeAsync("AddGroupConnection", group, remoteConnection.ConnectionId);
+        await invocationConnection.InvokeAsync("SendGroup", group, _message);
+        await _lockObj.WaitAsync(RpcWait);
+
+        var receivedMessage = _messageManager.DequeueMessage(remoteConnection.ConnectionId);
+        if (receivedMessage == null)
+            Assert.Fail($"expected _message for {remoteConnection.ConnectionId}");
+
+        Assert.AreEqual(_message, receivedMessage);
+        Assert.AreEqual(1, _messageManager.LifetimeEnqueued());
+    }
+
+    [TestMethod]
+    public async Task SendGroup_LocalAndRemoteServer()
+    {
+        if (_ports.Length < 2)
+        {
+            Assert.Inconclusive("Test requires multiple servers");
+            return;
+        }
+
+        var group = Guid.NewGuid().ToString();
+        List<HubConnection> groupConnections = null;
+        while (groupConnections == null || groupConnections.DistinctBy(x => _connectionManager.GetServerPort(x)).Count() < 2)
+            groupConnections = GetRandomConnections(_connectionManager, GroupConnectionCount);
+
+        var invocationConnection = _connectionManager.First();
+        foreach (var connection in groupConnections)
+            await invocationConnection.InvokeAsync("AddGroupConnection", group, connection.ConnectionId);
+        await invocationConnection.InvokeAsync("SendGroup", group, _message);
+
+        foreach (var _ in groupConnections)
+            await _lockObj.WaitAsync(RpcWait);
+
+        foreach (var connection in groupConnections)
+        {
+            var receivedMessage = _messageManager.DequeueMessage(connection.ConnectionId);
+            if (receivedMessage == null)
+                Assert.Fail($"expected _message for {connection.ConnectionId}");
+
+            Assert.AreEqual(_message, receivedMessage);
+        }
+
+        Assert.AreEqual(groupConnections.Count, _messageManager.LifetimeEnqueued());
+    }
+
     [TestMethod]
     public async Task SendGroupExcept()
     {
@@ -454,5 +516,40 @@ public class IntegrationTests
         }
 
         Assert.AreEqual(GroupConnectionCount * 2 - 1, _messageManager.LifetimeEnqueued());
+    }
+
+    [TestMethod]
+    public async Task SendGroupRemove_Remote()
+    {
+        if (_ports.Length < 2)
+        {
+            Assert.Inconclusive("Test requires multiple servers");
+            return;
+        }
+
+        var group = Guid.NewGuid().ToString();
+        var invocationConnection = _connectionManager.First();
+        var remoteConnection = _connectionManager.Skip(1).Take(1).First();
+
+        Assert.AreNotEqual(_connectionManager.GetServerPort(invocationConnection), _connectionManager.GetServerPort(remoteConnection));
+
+        await invocationConnection.InvokeAsync("AddGroupConnection", group, remoteConnection.ConnectionId);
+        await invocationConnection.InvokeAsync("SendGroup", group, _message);
+        await _lockObj.WaitAsync(RpcWait);
+
+        var receivedMessage = _messageManager.DequeueMessage(remoteConnection.ConnectionId);
+        if (receivedMessage == null)
+            Assert.Fail($"expected _message for {remoteConnection.ConnectionId}");
+
+        Assert.AreEqual(_message, receivedMessage);
+        Assert.AreEqual(1, _messageManager.LifetimeEnqueued());
+
+        // remove remoteConnection and validate they don't receive any other messages for group
+        await invocationConnection.InvokeAsync("RemoveGroupConnection", group, remoteConnection.ConnectionId);
+        await invocationConnection.InvokeAsync("SendGroup", group, _message);
+        // expect a timeout here
+        await _lockObj.WaitAsync(RpcWait);
+
+        Assert.AreEqual(1, _messageManager.LifetimeEnqueued());
     }
 }
