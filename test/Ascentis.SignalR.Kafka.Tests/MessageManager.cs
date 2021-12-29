@@ -5,7 +5,7 @@ namespace Ascentis.SignalR.Kafka.IntegrationTests;
 
 internal class MessageManager
 {
-    private ConcurrentDictionary<string, ConcurrentQueue<string>> _messages = new();
+    private readonly ConcurrentDictionary<string, ConcurrentQueue<string>> _messages = new();
     private int _internalId;
 
     public void EnqueueMessage(string connectionId, string message)

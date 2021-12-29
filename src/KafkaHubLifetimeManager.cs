@@ -23,6 +23,7 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
     private readonly KafkaProtocol _protocol;
     private readonly SemaphoreSlim _connectionLock = new(1);
     private readonly KafkaOptions _options;
+    private readonly KafkaTopics _topics;
     private IProducer<string, byte[]> _producer;
     private KafkaConsumer _consumer;
     private bool _kafkaInitialized;
@@ -40,6 +41,8 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
         _logger = logger;
         _ackHandler = new AckHandler();
         _options = options.Value;
+        _topics = new KafkaTopics(_options.TopicPrefix);
+
         InitKafkaConnection(_options.ConsumerConfig, _options.ProducerConfig);
             
         if (globalHubOptions != null && hubOptions != null)
@@ -90,13 +93,13 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
     public override Task SendAllAsync(string methodName, object[] args, CancellationToken cancellationToken = default)
     {
         var message = _protocol.WriteInvocation(methodName, args);
-        return PublishAsync("send-all", message);
+        return PublishAsync(_topics.SendAll, message);
     }
 
     public override Task SendAllExceptAsync(string methodName, object[] args, IReadOnlyList<string> excludedConnectionIds, CancellationToken cancellationToken = default)
     {
         var message = _protocol.WriteInvocation(methodName, args, excludedConnectionIds);
-        return PublishAsync("send-all", message);
+        return PublishAsync(_topics.SendAll, message);
     }
         
     public override Task SendConnectionAsync(string connectionId, string methodName, object[] args, CancellationToken cancellationToken = default)
@@ -113,7 +116,7 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
         }
 
         var message = _protocol.WriteInvocation(methodName, args);
-        return PublishAsync("send-conn", connectionId, message);
+        return PublishAsync(_topics.SendConnection, connectionId, message);
     }
 
     public override Task SendGroupAsync(string groupName, string methodName, object[] args, CancellationToken cancellationToken = default)
@@ -124,7 +127,7 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
         }
 
         var message = _protocol.WriteInvocation(methodName, args);
-        return PublishAsync("send-group", groupName, message);
+        return PublishAsync(_topics.SendGroup, groupName, message);
     }
 
     public override Task SendGroupExceptAsync(string groupName, string methodName, object[] args, IReadOnlyList<string> excludedConnectionIds, CancellationToken cancellationToken = default)
@@ -135,13 +138,13 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
         }
 
         var message = _protocol.WriteInvocation(methodName, args, excludedConnectionIds);
-        return PublishAsync("send-group", groupName, message);
+        return PublishAsync(_topics.SendGroup, groupName, message);
     }
 
     public override Task SendUserAsync(string userId, string methodName, object[] args, CancellationToken cancellationToken = default)
     {
         var message = _protocol.WriteInvocation(methodName, args);
-        return PublishAsync("send-user", userId, message);
+        return PublishAsync(_topics.SendUser, userId, message);
     }
         
     public override Task AddToGroupAsync(string connectionId, string groupName, CancellationToken cancellationToken = default)
@@ -192,7 +195,7 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
 
         foreach (var connectionId in connectionIds)
         {
-            publishTasks.Add(PublishAsync("send-conn", connectionId, payload));
+            publishTasks.Add(PublishAsync(_topics.SendConnection, connectionId, payload));
         }
 
         return Task.WhenAll(publishTasks);
@@ -211,7 +214,7 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
         {
             if (!string.IsNullOrEmpty(groupName))
             {
-                publishTasks.Add(PublishAsync("send-group", groupName, payload));
+                publishTasks.Add(PublishAsync(_topics.SendGroup, groupName, payload));
             }
         }
 
@@ -229,7 +232,7 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
         {
             if (!string.IsNullOrEmpty(userId))
             {
-                publishTasks.Add(PublishAsync("send-user", userId, payload));
+                publishTasks.Add(PublishAsync(_topics.SendUser, userId, payload));
             }
         }
 
@@ -288,7 +291,7 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
         var ack = _ackHandler.CreateAck(id);
         // Send Add/Remove Group to other servers and wait for an ack or timeout
         var message = _protocol.WriteGroupCommand(new GroupCommand(id, _serverName, action, groupName, connectionId));
-        await PublishAsync("group-mgmt", groupName, message);
+        await PublishAsync(_topics.GroupManagement, groupName, message);
         await ack;
     }
 
@@ -327,7 +330,7 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
                     _logger.Log(logMessage.Level.ToLogLevel(), logMessage.Message);
                 });
             _consumer = new KafkaConsumer(consumerBuilder, _logger);
-            _consumer.Subscribe(new List<string> { "send-all", "send-conn", "send-group", "send-user", "ack", "group-mgmt" });
+            _consumer.Subscribe(new List<string> { _topics.SendAll, _topics.SendConnection, _topics.SendGroup, _topics.SendUser, _topics.Ack, _topics.GroupManagement });
             _consumer.StartConsuming(async (result, cancellationToken) => await ConsumeMessages(result, cancellationToken));
             _kafkaInitialized = true;
         }
@@ -358,7 +361,7 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
                 break;
         }
 
-        await PublishAsync("ack", groupMessage.ServerName, _protocol.WriteAck(groupMessage.Id));
+        await PublishAsync(_topics.Ack, groupMessage.ServerName, _protocol.WriteAck(groupMessage.Id));
     }
 
     private void AckInvocation(ConsumeResult<string, byte[]> consumeResult)
@@ -437,27 +440,22 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
 
     private async Task ConsumeMessages(ConsumeResult<string, byte[]> consumeResult, CancellationToken cancellationToken)
     {
-        switch (consumeResult.Topic)
-        {
-            case "send-conn":
-                await SendConnectionInvocation(consumeResult, cancellationToken);
-                break;
-            case "send-all":
-                await SendAllInvocation(consumeResult, cancellationToken);
-                break;
-            case "send-group":
-                await SendGroupInvocation(consumeResult, cancellationToken);
-                break;
-            case "send-user":
-                await SendUserInvocation(consumeResult, cancellationToken);
-                break;
-            case "ack":
-                AckInvocation(consumeResult);
-                break;
-            case "group-mgmt":
-                await SendGroupManagementInvocation(consumeResult);
-                break;
-        }
+        var topic = consumeResult.Topic;
+
+        if (topic == _topics.SendConnection)
+            await SendConnectionInvocation(consumeResult, cancellationToken);
+        else if (topic == _topics.SendAll)
+            await SendAllInvocation(consumeResult, cancellationToken);
+        else if (topic == _topics.SendGroup)
+            await SendGroupInvocation(consumeResult, cancellationToken);
+        else if (topic == _topics.SendUser)
+            await SendUserInvocation(consumeResult, cancellationToken);
+        else if (topic == _topics.Ack)
+            AckInvocation(consumeResult);
+        else if (topic == _topics.GroupManagement)
+            await SendGroupManagementInvocation(consumeResult);
+        else 
+            _logger.LogError("Consuming unexpected topic: {topic}", topic);
     }
 
     private static string GenerateServerName()

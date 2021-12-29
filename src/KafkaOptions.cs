@@ -10,4 +10,6 @@ public class KafkaOptions
 
     [Required]
     public ProducerConfig ProducerConfig { get; set; }
+
+    public string TopicPrefix { get; set; }
 }
