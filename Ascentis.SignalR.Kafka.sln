@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31424.327
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ascentis.SignalR.Kafka", "src\Ascentis.SignalR.Kafka.csproj", "{E88FC985-67E4-4A57-BAB5-B22BB2E970AD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ascentis.SignalR.Kafka.IntegrationTests", "test\Ascentis.SignalR.Kafka.Tests\Ascentis.SignalR.Kafka.IntegrationTests.csproj", "{325FA0D3-A668-46C4-B5F8-E54898A73BE2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ascentis.SignalR.Kafka.IntegrationTests.Server", "test\Ascentis.SignalR.Kafka.IntegrationTests.Server\Ascentis.SignalR.Kafka.IntegrationTests.Server.csproj", "{DE434D39-D4C2-46F1-BCD2-A4CE8D18315E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E88FC985-67E4-4A57-BAB5-B22BB2E970AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E88FC985-67E4-4A57-BAB5-B22BB2E970AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E88FC985-67E4-4A57-BAB5-B22BB2E970AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E88FC985-67E4-4A57-BAB5-B22BB2E970AD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{325FA0D3-A668-46C4-B5F8-E54898A73BE2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{325FA0D3-A668-46C4-B5F8-E54898A73BE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{325FA0D3-A668-46C4-B5F8-E54898A73BE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{325FA0D3-A668-46C4-B5F8-E54898A73BE2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DE434D39-D4C2-46F1-BCD2-A4CE8D18315E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DE434D39-D4C2-46F1-BCD2-A4CE8D18315E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DE434D39-D4C2-46F1-BCD2-A4CE8D18315E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DE434D39-D4C2-46F1-BCD2-A4CE8D18315E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {54875676-B359-47E8-80CB-C2868F522DA8}
+	EndGlobalSection
+EndGlobal
