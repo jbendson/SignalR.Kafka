@@ -38,6 +38,7 @@ public class Startup
                     LingerMs = 5,
                     MessageTimeoutMs = 5000
                 };
+                options.KafkaTopicConfig = new KafkaTopicConfig("test");
             });
         services
             .AddAuthentication(options =>

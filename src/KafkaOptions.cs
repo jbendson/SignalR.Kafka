@@ -11,5 +11,6 @@ public class KafkaOptions
     [Required]
     public ProducerConfig ProducerConfig { get; set; }
 
-    public string TopicPrefix { get; set; }
+    [Required]
+    public KafkaTopicConfig KafkaTopicConfig { get; set; } = new KafkaTopicConfig();
 }

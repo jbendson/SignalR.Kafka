@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Ascentis.SignalR.Kafka.Extensions;
 using Ascentis.SignalR.Kafka.Internal;
 using Confluent.Kafka;
+using Confluent.Kafka.Admin;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Protocol;
 using Microsoft.Extensions.Logging;
@@ -41,9 +42,9 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
         _logger = logger;
         _ackHandler = new AckHandler();
         _options = options.Value;
-        _topics = new KafkaTopics(_options.TopicPrefix);
+        _topics = new KafkaTopics(_options.KafkaTopicConfig.TopicPrefix);
 
-        InitKafkaConnection(_options.ConsumerConfig, _options.ProducerConfig);
+        InitKafkaConnection(_options);
             
         if (globalHubOptions != null && hubOptions != null)
         {
@@ -305,9 +306,37 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
         _producer?.Dispose();
         _consumer?.Dispose();
     }
-    
-    private void InitKafkaConnection(ConsumerConfig consumerConfig, ProducerConfig producerConfig)
+
+    private async Task InitTopics(string bootstrapServers, KafkaTopicConfig kafkaTopicConfig)
     {
+        using var adminClient = new AdminClientBuilder(new AdminClientConfig { BootstrapServers = bootstrapServers }).Build();
+        var topics = new List<TopicSpecification>()
+        {
+            kafkaTopicConfig.AckSpecification,
+            kafkaTopicConfig.GroupManagementSpecification,
+            kafkaTopicConfig.SendAllSpecification,
+            kafkaTopicConfig.SendConnectionSpecification,
+            kafkaTopicConfig.SendGroupSpecification,
+            kafkaTopicConfig.SendUserSpecification
+        };
+
+        try
+        {
+            await adminClient.CreateTopicsAsync(topics);
+            _logger.LogInformation("Created topics: {topics}", string.Join(", ", topics.Select(x => x.Name).ToArray()));
+        }
+        catch (CreateTopicsException e)
+        {
+            foreach (var result in e.Results)
+                _logger.LogDebug("An error occurred creating topic {topic}: {reason}", result.Topic, result.Error.Reason);
+        }
+    }
+
+    private void InitKafkaConnection(KafkaOptions options)
+    {
+        var consumerConfig = options.ConsumerConfig;
+        var producerConfig = options.ProducerConfig;
+
         if (_kafkaInitialized) 
             return;
 
@@ -317,6 +346,7 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
             if (_kafkaInitialized) 
                 return;
 
+            InitTopics(producerConfig.BootstrapServers, options.KafkaTopicConfig).GetAwaiter().GetResult();
             var producerBuilder = new ProducerBuilder<string, byte[]>(producerConfig)
                 .SetLogHandler((_, logMessage) =>
                 {
@@ -330,8 +360,10 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
                     _logger.Log(logMessage.Level.ToLogLevel(), logMessage.Message);
                 });
             _consumer = new KafkaConsumer(consumerBuilder, _logger);
-            _consumer.Subscribe(new List<string> { _topics.SendAll, _topics.SendConnection, _topics.SendGroup, _topics.SendUser, _topics.Ack, _topics.GroupManagement });
+            var topics = new List<string> { _topics.Ack, _topics.GroupManagement, _topics.SendAll, _topics.SendConnection, _topics.SendGroup, _topics.SendUser };
+            _consumer.Subscribe(topics);
             _consumer.StartConsuming(async (result, cancellationToken) => await ConsumeMessages(result, cancellationToken));
+            _logger.LogInformation("Consuming topics: {topics}", string.Join(", ", topics));
             _kafkaInitialized = true;
         }
         finally
