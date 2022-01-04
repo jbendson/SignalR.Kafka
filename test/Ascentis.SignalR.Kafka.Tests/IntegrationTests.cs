@@ -161,7 +161,7 @@ public class IntegrationTests
     }
 
     [TestMethod]
-    public async Task SendAll_SingleServerSingleClient()
+    public async Task SendAll_LocalSingleClient()
     {
         // test does not use common test objects
         await TestObjectCleanup();
