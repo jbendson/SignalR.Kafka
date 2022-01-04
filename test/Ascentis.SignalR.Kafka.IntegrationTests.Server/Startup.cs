@@ -30,13 +30,7 @@ public class Startup
                 options.ProducerConfig = new ProducerConfig
                 {
                     BootstrapServers = bootstrapServers,
-                    ClientId = $"{Environment.MachineName}_{Guid.NewGuid():N}",
-                    Acks = Acks.All,
-                    MessageSendMaxRetries = 0,
-                    BatchNumMessages = 100000,
-                    SocketNagleDisable = true,
-                    LingerMs = 5,
-                    MessageTimeoutMs = 5000
+                    ClientId = $"{Environment.MachineName}_{Guid.NewGuid():N}"
                 };
                 options.KafkaTopicConfig = new KafkaTopicConfig("test");
             });
