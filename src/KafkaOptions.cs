@@ -13,4 +13,6 @@ public class KafkaOptions
 
     [Required]
     public KafkaTopicConfig KafkaTopicConfig { get; set; } = new KafkaTopicConfig();
+
+    public bool AwaitProduce { get; set; }
 }

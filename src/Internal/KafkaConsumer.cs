@@ -13,13 +13,16 @@ internal class KafkaConsumer : IDisposable
     private readonly ILogger _logger;
     private readonly CancellationTokenSource _cancellationTokenSource;
     private Task _consumingTask;
+    private readonly Action<ConsumeResult<string, byte[]>, CancellationToken> _consumeAction;
     private const int ExceptionDelay = 1000;
 
-    public KafkaConsumer(ConsumerBuilder<string, byte[]> consumerBuilder, ILogger logger)
+    public KafkaConsumer(ConsumerBuilder<string, byte[]> consumerBuilder, ILogger logger,
+        Action<ConsumeResult<string, byte[]>, CancellationToken> consumeAction)
     {
-        _logger = logger;
         _consumer = consumerBuilder.Build();
         _cancellationTokenSource = new CancellationTokenSource();
+        _consumeAction = consumeAction;
+        _logger = logger;
     }
 
     public void Subscribe(List<string> topics)
@@ -27,7 +30,7 @@ internal class KafkaConsumer : IDisposable
         _consumer.Subscribe(topics);
     }
 
-    public void StartConsuming(Func<ConsumeResult<string, byte[]>, CancellationToken, Task> consumeAction)
+    public void StartConsuming()
     {
         var cancellationToken = _cancellationTokenSource.Token;
         _consumingTask = Task.Run(async () =>
@@ -36,11 +39,11 @@ internal class KafkaConsumer : IDisposable
             {
                 try
                 {
-                    var result = _consumer.Consume(cancellationToken);
-                    if (result == null)
+                    var consumeResult = _consumer.Consume(cancellationToken);
+                    if (consumeResult == null)
                         continue;
 
-                    await consumeAction(result, cancellationToken);
+                    _consumeAction(consumeResult, cancellationToken);
                 }
                 catch (Exception ex)
                 {
@@ -57,7 +60,8 @@ internal class KafkaConsumer : IDisposable
         if (_consumingTask != null)
         {
             _cancellationTokenSource.Cancel();
-            _consumingTask.Dispose();
+            if (_consumingTask.IsCompleted)
+                _consumingTask.Dispose();
         }
         _cancellationTokenSource.Dispose();
         _consumer.Dispose();

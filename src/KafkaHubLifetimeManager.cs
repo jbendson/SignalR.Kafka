@@ -25,6 +25,7 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
     private readonly SemaphoreSlim _connectionLock = new(1);
     private readonly KafkaOptions _options;
     private readonly KafkaTopics _topics;
+    private readonly bool _awaitProduce;
     private IProducer<string, byte[]> _producer;
     private KafkaConsumer _consumer;
     private bool _kafkaInitialized;
@@ -43,6 +44,7 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
         _ackHandler = new AckHandler();
         _options = options.Value;
         _topics = new KafkaTopics(_options.KafkaTopicConfig.TopicPrefix);
+        _awaitProduce = _options.AwaitProduce;
 
         InitKafkaConnection(_options);
             
@@ -243,7 +245,10 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
     private async Task PublishAsync(string topic, string key, byte[] payload)
     {
         var message = new Message<string, byte[]> { Key = key, Value = payload };
-        await _producer.ProduceAsync(topic, message);
+        if (_awaitProduce)
+            await _producer.ProduceAsync(topic, message);
+        else
+            _producer.ProduceAsync(topic, message).FireAndForget(_logger);
     }
 
     private Task PublishAsync(string topic, byte[] payload)
@@ -267,10 +272,6 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
         return _groups.AddSubscriptionAsync(groupName, connection);
     }
 
-    /// <summary>
-    /// This takes <see cref="HubConnectionContext"/> because we want to remove the connection from the
-    /// _connections list in OnDisconnectedAsync and still be able to remove groups with this method.
-    /// </summary>
     private async Task RemoveGroupAsyncCore(HubConnectionContext connection, string groupName)
     {
         await _groups.RemoveSubscriptionAsync(groupName, connection);
@@ -296,9 +297,6 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
         await ack;
     }
 
-    /// <summary>
-    /// Cleans up the Kafka connection.
-    /// </summary>
     public void Dispose()
     {
         GC.SuppressFinalize(this);
@@ -359,10 +357,10 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
                 {
                     _logger.Log(logMessage.Level.ToLogLevel(), logMessage.Message);
                 });
-            _consumer = new KafkaConsumer(consumerBuilder, _logger);
+            _consumer = new KafkaConsumer(consumerBuilder, _logger, async (consumeResult, cancellationToken) => await ConsumeMessages(consumeResult, cancellationToken));
             var topics = new List<string> { _topics.Ack, _topics.GroupManagement, _topics.SendAll, _topics.SendConnection, _topics.SendGroup, _topics.SendUser };
             _consumer.Subscribe(topics);
-            _consumer.StartConsuming(async (result, cancellationToken) => await ConsumeMessages(result, cancellationToken));
+            _consumer.StartConsuming();
             _logger.LogInformation("Consuming topics: {topics}", string.Join(", ", topics));
             _kafkaInitialized = true;
         }
@@ -475,16 +473,17 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
         var topic = consumeResult.Topic;
 
         if (topic == _topics.SendConnection)
-            await SendConnectionInvocation(consumeResult, cancellationToken);
+            SendConnectionInvocation(consumeResult, cancellationToken).FireAndForget(_logger);
         else if (topic == _topics.SendAll)
-            await SendAllInvocation(consumeResult, cancellationToken);
+            SendAllInvocation(consumeResult, cancellationToken).FireAndForget(_logger);
         else if (topic == _topics.SendGroup)
-            await SendGroupInvocation(consumeResult, cancellationToken);
+            SendGroupInvocation(consumeResult, cancellationToken).FireAndForget(_logger);
         else if (topic == _topics.SendUser)
-            await SendUserInvocation(consumeResult, cancellationToken);
+            SendUserInvocation(consumeResult, cancellationToken).FireAndForget(_logger);
         else if (topic == _topics.Ack)
             AckInvocation(consumeResult);
         else if (topic == _topics.GroupManagement)
+            // await group management to ensure group actions processed in order consumed
             await SendGroupManagementInvocation(consumeResult);
         else 
             _logger.LogError("Consuming unexpected topic: {topic}", topic);

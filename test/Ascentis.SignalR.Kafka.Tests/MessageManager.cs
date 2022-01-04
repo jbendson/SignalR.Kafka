@@ -36,4 +36,10 @@ internal class MessageManager
     {
         return Interlocked.CompareExchange(ref _internalId, 0, 0);
     }
+
+    public void Reset()
+    {
+        _messages.Clear();
+        Interlocked.Exchange(ref _internalId, 0);
+    }
 }
