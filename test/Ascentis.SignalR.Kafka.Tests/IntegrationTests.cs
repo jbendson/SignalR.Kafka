@@ -13,8 +13,8 @@ namespace Ascentis.SignalR.Kafka.IntegrationTests;
 public class IntegrationTests
 {
     private static readonly int[] _ports = new int[] { 5010, 5011, 5012, 5013 };
-    private const int RpcWait = 1000;
-    private const int StartupWait = 5000;
+    private const int RpcWait = 2000;
+    private const int StartupWait = 10000;
     private const int ConnectionCount = 5;
     private const int GroupConnectionCount = 3;
     private static List<Process> _servers = new();
@@ -293,9 +293,16 @@ public class IntegrationTests
 
         Assert.AreNotEqual(_connectionManager.GetServerPort(invocationConnection), _connectionManager.GetServerPort(remoteConnection));
 
+        var sw = new Stopwatch();
+        sw.Start();
         await invocationConnection.InvokeAsync("AddGroupConnection", group, remoteConnection.ConnectionId);
+        TestContext.WriteLine($"AddGroupConnection elapsed ms: {sw.ElapsedMilliseconds}");
+        sw.Restart();
         await invocationConnection.InvokeAsync("SendGroup", group, _message);
+        TestContext.WriteLine($"SendGroup elapsed ms: {sw.ElapsedMilliseconds}");
+        sw.Restart();
         await _lockObj.WaitAsync(RpcWait);
+        TestContext.WriteLine($"SendGroup received elapsed ms: {sw.ElapsedMilliseconds}");
 
         var receivedMessage = _messageManager.DequeueMessage(remoteConnection.ConnectionId);
         if (receivedMessage == null)
