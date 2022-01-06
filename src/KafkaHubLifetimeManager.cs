@@ -407,7 +407,15 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
     {
         var invocation = _protocol.ReadInvocation(consumeResult.Message.Value);
         var connectionId = consumeResult.Message.Key;
-        await _connections[connectionId].WriteAsync(invocation.Message, cancellationToken);
+        var connection = _connections[connectionId];
+        if (connection == null)
+        {
+            _logger.LogDebug("SendConnectionInvocation connection not found {connectionId}", connectionId);
+            return;
+        }
+
+        _logger.LogDebug("SendConnectionInvocation write connection {connectionId}", connectionId);
+        await connection.WriteAsync(invocation.Message, cancellationToken);
     }
 
     private async Task SendAllInvocation(ConsumeResult<string, byte[]> consumeResult, CancellationToken cancellationToken)
@@ -419,10 +427,10 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
         {
             if (invocation.ExcludedConnectionIds != null && invocation.ExcludedConnectionIds.Contains(connection.ConnectionId))
             {
-                _logger.LogDebug("SendAll exclude connection {connectionId}", connection.ConnectionId);
+                _logger.LogDebug("SendAllInvocation exclude connection {connectionId}", connection.ConnectionId);
                 continue;
             }
-            _logger.LogDebug("SendAll write connection {connectionId}", connection.ConnectionId);
+            _logger.LogDebug("SendAllInvocation write connection {connectionId}", connection.ConnectionId);
             tasks.Add(connection.WriteAsync(invocation.Message, cancellationToken).AsTask());
         }
 
