@@ -17,7 +17,7 @@
     },
     "Ascentis.Kafka.SignalR.IntegrationTests.Server": {
       "commandName": "Project",
-      "commandLineArgs": "5010",
+      "commandLineArgs": "6010",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
