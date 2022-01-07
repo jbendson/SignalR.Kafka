@@ -15,9 +15,9 @@ public class PerformanceTests
     private static readonly int[] _ports = new int[] { 6010, 6011 };
     private const int RpcWait = 1000;
     private const int StartupWait = 5000;
-    private const int ConnectionCount = 6;
     private static List<Process> _servers = new();
     private static readonly SemaphoreSlim _testLock = new (1);
+    private readonly int ConnectionCount = 6;
     private ConnectionManager _connectionManager;
     private MessageManager _messageManager;
     private string _message;
@@ -150,8 +150,10 @@ public class PerformanceTests
         const int messagesPerConnection = 10000;
         await PrimeServers();
         var startTime = DateTime.UtcNow;
-        var tasks = new List<Task>();
-        tasks.Add(CheckLifetimeEnqueued(ConnectionCount * ConnectionCount * messagesPerConnection));
+        var tasks = new List<Task>
+        {
+            CheckLifetimeEnqueued(ConnectionCount * ConnectionCount * messagesPerConnection)
+        };
         foreach (var connection in _connectionManager)
             for (var i = 0; i < messagesPerConnection; i++)
                 tasks.Add(connection.InvokeAsync("SendAll", $"{_message} {i}"));
@@ -191,7 +193,7 @@ public class PerformanceTests
             Assert.Inconclusive("Test requires 2 connections");
 
         const int messagesPerConnection = 10000;
-        const int pairs = ConnectionCount / 2;
+        int pairs = ConnectionCount / 2;
         
         await PrimeServers();
         var startTime = DateTime.UtcNow;

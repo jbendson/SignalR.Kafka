@@ -12,11 +12,11 @@ namespace Ascentis.SignalR.Kafka.IntegrationTests;
 [TestClass]
 public class IntegrationTests
 {
-    private static readonly int[] _ports = new int[] { 5010, 5011, 5012, 5013 };
+    private static readonly int[] _ports = new int[] { 5010};
     private const int RpcWait = 2000;
     private const int StartupWait = 10000;
-    private const int ConnectionCount = 5;
     private const int GroupConnectionCount = 3;
+    private readonly int ConnectionCount = 5;
     private static List<Process> _servers = new();
     private static readonly SemaphoreSlim _testLock = new (1);
     private SemaphoreSlim _lockObj;

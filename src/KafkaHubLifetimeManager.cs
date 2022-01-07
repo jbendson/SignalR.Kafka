@@ -348,14 +348,14 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
             var producerBuilder = new ProducerBuilder<string, byte[]>(producerConfig)
                 .SetLogHandler((_, logMessage) =>
                 {
-                    _logger.Log(logMessage.Level.ToLogLevel(), logMessage.Message);
+                    _logger.Log(logMessage.Level.ToLogLevel(), "Kafka Log: {message}", logMessage.Message);
                 });
             _producer = producerBuilder.Build();
 
             var consumerBuilder = new ConsumerBuilder<string, byte[]>(consumerConfig)
                 .SetLogHandler((_, logMessage) =>
                 {
-                    _logger.Log(logMessage.Level.ToLogLevel(), logMessage.Message);
+                    _logger.Log(logMessage.Level.ToLogLevel(), "Kafka Log: {message}", logMessage.Message);
                 });
             _consumer = new KafkaConsumer(consumerBuilder, _logger, async (consumeResult, cancellationToken) => await ConsumeMessages(consumeResult, cancellationToken));
             var topics = new List<string> { _topics.Ack, _topics.GroupManagement, _topics.SendAll, _topics.SendConnection, _topics.SendGroup, _topics.SendUser };
