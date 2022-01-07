@@ -218,7 +218,10 @@ public class IntegrationTests
     [TestMethod]
     public async Task SendConnection()
     {
-        var connectionId = _connectionManager.Last().ConnectionId;
+        var connectionId = ConnectionCount > 1
+            ? _connectionManager.Skip(1).Take(1).First().ConnectionId
+            : _connectionManager.First().ConnectionId;
+
         await _connectionManager.First().InvokeAsync("SendConnection", connectionId, _message);
         await _lockObj.WaitAsync(RpcWait);
 
@@ -231,10 +234,25 @@ public class IntegrationTests
         Assert.AreEqual(_message, receivedMessage);
     }
 
+
+    [TestMethod]
+    public async Task SendConnection_NonExisting()
+    {
+        var connectionId = "not existing";
+        await _connectionManager.First().InvokeAsync("SendConnection", connectionId, _message);
+        // expect a timeout
+        await _lockObj.WaitAsync(RpcWait);
+
+        Assert.AreEqual(0, _messageManager.LifetimeEnqueued());
+    }
+
     [TestMethod]
     public async Task SendAll_Except()
     {
-        var connectionId = _connectionManager.Last().ConnectionId;
+        var connectionId = ConnectionCount > 1
+            ? _connectionManager.Skip(1).Take(1).First().ConnectionId
+            : _connectionManager.First().ConnectionId;
+
         await _connectionManager.First().InvokeAsync("SendAllExcept", new[] { connectionId }, _message);
 
         var includedConnections = _connectionManager.Where(x => x.ConnectionId != connectionId).ToList();
@@ -452,8 +470,9 @@ public class IntegrationTests
     [TestMethod]
     public async Task SendUser()
     {
-        var connectionId = _connectionManager.Last().ConnectionId;
-        await _connectionManager.First().InvokeAsync("SendUser", $"user{ConnectionCount - 1}", _message);
+        var receivingIndex = ConnectionCount > 1 ? 1 : 0;
+        var connectionId = _connectionManager.Skip(receivingIndex).Take(1).First().ConnectionId;
+        await _connectionManager.First().InvokeAsync("SendUser", $"user{receivingIndex}", _message);
         await _lockObj.WaitAsync(RpcWait);
 
         Assert.AreEqual(1, _messageManager.LifetimeEnqueued());
@@ -468,8 +487,12 @@ public class IntegrationTests
     [TestMethod]
     public async Task SendUsers()
     {
-        var userConnections = new List<HubConnection> { _connectionManager.First(), _connectionManager.Last() };
-        await _connectionManager.First().InvokeAsync("SendUsers", new[] { $"user{0}", $"user{ConnectionCount - 1}" }, _message);
+        if (ConnectionCount < 2)
+            Assert.Inconclusive("Test requires multiple client connections");
+
+        var userConnections = new List<HubConnection> { _connectionManager.First(), _connectionManager.Skip(1).Take(1).First() };
+
+        await _connectionManager.First().InvokeAsync("SendUsers", new[] { $"user{0}", $"user{1}" }, _message);
         foreach (var _ in userConnections)
             await _lockObj.WaitAsync(RpcWait);
 
