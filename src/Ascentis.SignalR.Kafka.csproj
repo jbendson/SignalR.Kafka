@@ -29,6 +29,7 @@
   <PropertyGroup>
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	<PackageReadmeFile>README.md</PackageReadmeFile>
+	<PackageId>signalr-kafka</PackageId>
   </PropertyGroup>
 
 </Project>
