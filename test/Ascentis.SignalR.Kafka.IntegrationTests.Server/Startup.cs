@@ -33,8 +33,20 @@ public class Startup
                     BootstrapServers = bootstrapServers,
                     ClientId = $"{Environment.MachineName}_{Guid.NewGuid():N}"
                 };
-                options.KafkaTopicConfig = new KafkaTopicConfig(topicPrefix: "test", ackSpecification: new Internal.KafkaTopicSpecification());
+                options.KafkaTopicConfig = new KafkaTopicConfig(
+                    ackSpecification: new KafkaTopicSpecification
+                    {
+                        ReplicationFactor = 1,
+                        NumPartitions = 10
+                    },
+                    groupManagementSpecification: new KafkaTopicSpecification
+                    {
+                        ReplicationFactor = 1,
+                        NumPartitions = 10
+                    });
+                options.AwaitProduce = true;
             });
+
         services
             .AddAuthentication(options =>
             {
