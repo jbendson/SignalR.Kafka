@@ -18,7 +18,7 @@ Topics may also be manually created in Kafka prior to running. The following sch
 
 ## Usage
 
-1. Install the [Ascentis.SignalR.Kafka](https://www.nuget.org/packages/SignalR.Kafka/) NuGet package.
+1. Install the [SignalR.Kafka](https://www.nuget.org/packages/SignalR.Kafka/) NuGet package.
 2. In ConfigureServices in Startup.cs, configure SignalR with `.AddKafka()`:
 
 ```
