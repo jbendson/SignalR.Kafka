@@ -248,7 +248,13 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
         if (_awaitProduce)
             await _producer.ProduceAsync(topic, message);
         else
-            _producer.ProduceAsync(topic, message).FireAndForget(_logger);
+            _producer.Produce(topic, message, PublishDeliveryHandler);
+    }
+
+    private void PublishDeliveryHandler(DeliveryReport<string, byte[]> deliveryReport)
+    {
+        if (deliveryReport.Error.IsError)
+            _logger.Log(LogLevel.Error, "Delivery error: {reason}", deliveryReport.Error.Reason);
     }
 
     private Task PublishAsync(string topic, byte[] payload)
