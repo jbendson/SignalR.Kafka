@@ -8,7 +8,7 @@
     <Description>An Apache Kafka backplane for ASP.NET Core SignalR</Description>
     <RepositoryUrl>https://github.com/jbendson/SignalR.Kafka</RepositoryUrl>
     <PackageTags>aspnetcore;signalr;kafka;backplane</PackageTags>
-	<Version>1.0.3</Version>
+	<Version>1.0.4</Version>
   </PropertyGroup>
 
   <ItemGroup>
