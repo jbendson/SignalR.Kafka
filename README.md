@@ -1,4 +1,4 @@
-# Ascentis.SignalR.Kafka
+# signalr-kakfa
 
 An Apache Kafka backplane for ASP.NET Core SignalR
 
@@ -9,12 +9,12 @@ This project is largely based off of a fork of the [SignalR Core Redis provider]
 Kafka topics are created automatically during startup if they don't yet exist. If not specified, the default topic configuration uses 10 partitions and a replication factor of 1.
 
 Topics may also be manually created in Kafka prior to running. The following schema is used. A partitioning strategy may be designed based off the key information provided for each topic.
-* (prefix_)ack: Acknowledge group management messages: Key is server unique name
-* (prefix-)group-mgmt: Group management messages (add/removal of connection from group): Key is server unique name
-* (prefix-)send-all: Messages intended for all connected clients: No key is used, messages will be delivered round robin to partitions
-* (prefix-)send-conn: Messages intended for a specific client connection. Key is connection id
-* (prefix-)send-group: Messages intended for a specific group. Key is group name
-* (prefix-)send-user: Messages intended for a specific user. Key is user id
+* **(_prefix-_)ack**: Acknowledge group management messages: Key is server unique name
+* **(_prefix-_)group-mgmt**: Group management messages (add/removal of connection from group): Key is server unique name
+* **(_prefix-_)send-all**: Messages intended for all connected clients: No key is used, messages will be delivered round robin to partitions
+* **(_prefix-_)send-conn**: Messages intended for a specific client connection. Key is connection id
+* **(_prefix-_)send-group**: Messages intended for a specific group. Key is group name
+* **(_prefix-_)send-user**: Messages intended for a specific user. Key is user id
 
 ## Usage
 
@@ -81,4 +81,4 @@ By default, produce is called asyncrounously and the SignalR action (Send) retur
 });
 ```
 
-Any exceptions during the produce operation should bubble up to the client using this configuration. However, it will dramatically reduce throughput. See the [Confluent documentation](https://docs.confluent.io/clients-confluent-kafka-dotnet/current/overview.html#producer) for more information on typical producer usage patterns.
+Any exceptions during the produce operation should bubble up to the client when AwaitProduce is true. However, this configuration will dramatically reduce throughput. See the [Confluent documentation](https://docs.confluent.io/clients-confluent-kafka-dotnet/current/overview.html#producer) for more information on typical producer usage patterns.
