@@ -1,5 +1,6 @@
 ﻿#nullable enable
 
+using Ascentis.SignalR.Kafka;
 using Ascentis.SignalR.Kafka.Internal;
 using Confluent.Kafka.Admin;
 

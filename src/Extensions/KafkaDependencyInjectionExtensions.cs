@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Ascentis.SignalR.Kafka;
+namespace Ascentis.SignalR.Kafka.Extensions;
 
 public static class KafkaDependencyInjectionExtensions
 {

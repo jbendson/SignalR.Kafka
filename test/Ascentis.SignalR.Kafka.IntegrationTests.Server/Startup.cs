@@ -1,3 +1,4 @@
+using Ascentis.SignalR.Kafka.Extensions;
 using Ascentis.SignalR.Kafka.IntegrationTests.Server.AuthenticationHandlers;
 using Ascentis.SignalR.Kafka.IntegrationTests.Server.Hubs;
 using Confluent.Kafka;
@@ -32,7 +33,7 @@ public class Startup
                     BootstrapServers = bootstrapServers,
                     ClientId = $"{Environment.MachineName}_{Guid.NewGuid():N}"
                 };
-                options.KafkaTopicConfig = new KafkaTopicConfig("test");
+                options.KafkaTopicConfig = new KafkaTopicConfig(topicPrefix: "test", ackSpecification: new Internal.KafkaTopicSpecification());
             });
         services
             .AddAuthentication(options =>

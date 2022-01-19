@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Ascentis.SignalR.Kafka.Internal
+namespace Ascentis.SignalR.Kafka
 {
     public class KafkaTopicSpecification
     {
