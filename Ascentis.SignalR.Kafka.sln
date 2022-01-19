@@ -1,13 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31424.327
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32014.148
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ascentis.SignalR.Kafka", "src\Ascentis.SignalR.Kafka.csproj", "{E88FC985-67E4-4A57-BAB5-B22BB2E970AD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ascentis.SignalR.Kafka.IntegrationTests", "test\Ascentis.SignalR.Kafka.Tests\Ascentis.SignalR.Kafka.IntegrationTests.csproj", "{325FA0D3-A668-46C4-B5F8-E54898A73BE2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ascentis.SignalR.Kafka.IntegrationTests", "test\Ascentis.SignalR.Kafka.Tests\Ascentis.SignalR.Kafka.IntegrationTests.csproj", "{325FA0D3-A668-46C4-B5F8-E54898A73BE2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ascentis.SignalR.Kafka.IntegrationTests.Server", "test\Ascentis.SignalR.Kafka.IntegrationTests.Server\Ascentis.SignalR.Kafka.IntegrationTests.Server.csproj", "{DE434D39-D4C2-46F1-BCD2-A4CE8D18315E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ascentis.SignalR.Kafka.IntegrationTests.Server", "test\Ascentis.SignalR.Kafka.IntegrationTests.Server\Ascentis.SignalR.Kafka.IntegrationTests.Server.csproj", "{DE434D39-D4C2-46F1-BCD2-A4CE8D18315E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

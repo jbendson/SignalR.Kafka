@@ -2,7 +2,21 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Authors>Joshua Bendson</Authors>
+    <Company />
+    <Description>An Apache Kafka backplane for ASP.NET Core SignalR</Description>
+    <RepositoryUrl>https://github.com/jbendson/SignalR.Kafka</RepositoryUrl>
+    <PackageTags>aspnetcore;signalr;kafka;backplane</PackageTags>
+	<Version>1.0.2</Version>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Confluent.Kafka" Version="1.8.2" />
@@ -11,5 +25,10 @@
     <PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
     <PackageReference Include="system.buffers" Version="4.5.1" />
   </ItemGroup>
+
+  <PropertyGroup>
+	<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	<PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
 
 </Project>
