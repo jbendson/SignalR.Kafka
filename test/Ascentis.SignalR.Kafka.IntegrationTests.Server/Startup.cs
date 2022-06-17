@@ -33,6 +33,10 @@ public class Startup
                     BootstrapServers = bootstrapServers,
                     ClientId = $"{Environment.MachineName}_{Guid.NewGuid():N}"
                 };
+                options.AdminConfig = new AdminClientConfig
+                {
+                    BootstrapServers = bootstrapServers
+                };
                 options.KafkaTopicConfig = new KafkaTopicConfig(
                     ackSpecification: new KafkaTopicSpecification
                     {
