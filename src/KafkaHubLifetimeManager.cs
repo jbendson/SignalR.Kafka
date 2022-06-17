@@ -311,9 +311,9 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
         _consumer?.Dispose();
     }
 
-    private async Task InitTopics(string bootstrapServers, KafkaTopicConfig kafkaTopicConfig)
+    private async Task InitTopics(KafkaOptions options, KafkaTopicConfig kafkaTopicConfig)
     {
-        using var adminClient = new AdminClientBuilder(new AdminClientConfig { BootstrapServers = bootstrapServers }).Build();
+        using var adminClient = new AdminClientBuilder(options.AdminConfig).Build();
         var topics = new List<TopicSpecification>()
         {
             kafkaTopicConfig.AckSpecification,
@@ -350,7 +350,7 @@ public class KafkaHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposab
             if (_kafkaInitialized) 
                 return;
 
-            InitTopics(producerConfig.BootstrapServers, options.KafkaTopicConfig).GetAwaiter().GetResult();
+            InitTopics(options, options.KafkaTopicConfig).GetAwaiter().GetResult();
             var producerBuilder = new ProducerBuilder<string, byte[]>(producerConfig)
                 .SetLogHandler((_, logMessage) =>
                 {

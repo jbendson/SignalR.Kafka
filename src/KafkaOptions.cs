@@ -6,6 +6,9 @@ namespace Ascentis.SignalR.Kafka;
 public class KafkaOptions
 {
     [Required]
+    public AdminClientConfig AdminConfig { get; set; }
+
+    [Required]
     public ConsumerConfig ConsumerConfig { get; set; }
 
     [Required]
