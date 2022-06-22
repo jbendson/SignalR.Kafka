@@ -96,7 +96,8 @@ public class PerformanceTests
         {
             var processStartInfo = new ProcessStartInfo
             {
-                FileName = @"..\..\..\..\Ascentis.SignalR.Kafka.IntegrationTests.Server\bin\Debug\net6.0\Ascentis.SignalR.Kafka.IntegrationTests.Server.exe",
+                WorkingDirectory = @"..\..\..\..\Ascentis.SignalR.Kafka.IntegrationTests.Server\bin\Debug\net6.0\",
+                FileName = @"Ascentis.SignalR.Kafka.IntegrationTests.Server.exe",
                 UseShellExecute = true,
                 CreateNoWindow = false,
                 Arguments = port.ToString()
