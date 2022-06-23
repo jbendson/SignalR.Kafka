@@ -42,11 +42,13 @@ Topics may also be manually created in Kafka prior to running. The following sch
 
 The configuration for producer and consumer must be specified with `options.ConsumerConfig` and `options.ProducerConfig`. Configuration for an admin connection may optionally be provided to define connection options used by the AdminClient for topic creation. Topic creation will only be attempted if this configuration is provided:
 ```
+.AddKafka((options) =>
+{
     options.AdminConfig = new AdminConfig
     {
         BootstrapServers = bootstrapServers
     };
-
+});
 ```
 
 A topic prefix may be configured thru the KafkaTopicConfig object to allow for multiple instances of the schema on a single Kafka deployment:
