@@ -6,7 +6,7 @@ This project is largely based off of a fork of the [SignalR Core Redis provider]
 
 ## Kafka Configuration
 
-Kafka topics are created automatically during startup if they don't yet exist. If not specified, the default topic configuration uses 10 partitions and a replication factor of 1.
+Kafka topics may be created automatically if they don't yet exist depending on configuration. The default topic configuration uses 10 partitions and a replication factor of 1 unless specified in the startup options.
 
 Topics may also be manually created in Kafka prior to running. The following schema is used. A partitioning strategy may be designed based off the key information provided for each topic.
 * **(_prefix-_)ack**: Acknowledge group management messages: Key is server unique name
@@ -40,7 +40,16 @@ Topics may also be manually created in Kafka prior to running. The following sch
 });
 ```
 
-The configuration for producer and consumer must be specified with `options.ConsumerConfig` and `options.ProducerConfig`. A topic prefix may be configured thru the KafkaTopicConfig object to allow for multiple instances of the schema on a single Kafka deployment:
+The configuration for producer and consumer must be specified with `options.ConsumerConfig` and `options.ProducerConfig`. Configuration for an admin connection may optionally be provided to define connection options used by the AdminClient for topic creation. Topic creation will only be attempted if this configuration is provided:
+```
+    options.AdminConfig = new AdminConfig
+    {
+        BootstrapServers = bootstrapServers
+    };
+
+```
+
+A topic prefix may be configured thru the KafkaTopicConfig object to allow for multiple instances of the schema on a single Kafka deployment:
 
 ```
 .AddKafka((options) =>

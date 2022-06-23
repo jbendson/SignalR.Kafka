@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
@@ -14,29 +15,27 @@ namespace Ascentis.SignalR.Kafka.IntegrationTests.Server;
 
 public class Startup
 {
+    public IConfiguration Configuration { get; }
+
+    public Startup(IConfiguration configuration)
+    {
+        Configuration = configuration;
+    }
+
     public void ConfigureServices(IServiceCollection services)
     {
-        var bootstrapServers = "192.168.28.43:9092,192.168.28.51:9092,192.168.28.52:9092";
         services
             .AddSignalR()
             .AddKafka((options) =>
             {
-                options.ConsumerConfig = new ConsumerConfig
+                options.AdminConfig = new AdminClientConfig(GetKafkaClientConfig());
+                options.ConsumerConfig = new ConsumerConfig(GetKafkaClientConfig())
                 {
                     GroupId = $"{Environment.MachineName}_{Guid.NewGuid():N}",
-                    BootstrapServers = bootstrapServers,
                     AutoOffsetReset = AutoOffsetReset.Latest,
                     EnableAutoCommit = true
                 };
-                options.ProducerConfig = new ProducerConfig
-                {
-                    BootstrapServers = bootstrapServers,
-                    ClientId = $"{Environment.MachineName}_{Guid.NewGuid():N}"
-                };
-                options.AdminConfig = new AdminClientConfig
-                {
-                    BootstrapServers = bootstrapServers
-                };
+                options.ProducerConfig = new ProducerConfig(GetKafkaClientConfig());
                 options.KafkaTopicConfig = new KafkaTopicConfig(
                     ackSpecification: new KafkaTopicSpecification
                     {
@@ -48,7 +47,7 @@ public class Startup
                         ReplicationFactor = 1,
                         NumPartitions = 10
                     });
-                options.AwaitProduce = true;
+                options.AwaitProduce = false;
             });
 
         services
@@ -78,5 +77,16 @@ public class Startup
             });
             endpoints.MapHub<TestHub>("testHub");
         });
+    }
+
+    private ClientConfig GetKafkaClientConfig()
+    {
+        var bootstrapServers = Configuration.GetValue<string>("BootstrapServers");
+
+        return new ClientConfig
+        {
+            BootstrapServers = bootstrapServers,
+            ClientId = $"{Environment.MachineName}_{Guid.NewGuid():N}"
+        };
     }
 }
