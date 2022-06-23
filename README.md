@@ -40,7 +40,7 @@ Topics may also be manually created in Kafka prior to running. The following sch
 });
 ```
 
-The configuration for producer and consumer must be specified with `options.ConsumerConfig` and `options.ProducerConfig`. Configuration for an admin connection may optionally be provided to define connection options used by the AdminClient for topic creation. Topics will not be created unless AdminConfig is specified:
+The configuration for producer and consumer must be specified with `options.ConsumerConfig` and `options.ProducerConfig`. Configuration for an admin connection may optionally be provided to define connection options used by the AdminClient for topic creation. Topic creation will only be attempted if this configuration is provided:
 ```
     options.AdminConfig = new AdminConfig
     {
