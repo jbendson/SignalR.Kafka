@@ -12,7 +12,7 @@ namespace Ascentis.SignalR.Kafka.IntegrationTests;
 [TestClass]
 public class IntegrationTests
 {
-    private static readonly int[] _ports = new int[] { 5010};
+    private static readonly int[] _ports = new int[] { 5010, 5011 };
     private const int RpcWait = 2000;
     private const int StartupWait = 10000;
     private const int GroupConnectionCount = 3;
