@@ -9,6 +9,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Ascentis.SignalR.Kafka.IntegrationTests;
 
+[Ignore]
 [TestClass]
 public class PerformanceTests
 {
@@ -96,7 +97,7 @@ public class PerformanceTests
         {
             var processStartInfo = new ProcessStartInfo
             {
-                WorkingDirectory = @"..\..\..\..\Ascentis.SignalR.Kafka.IntegrationTests.Server\bin\Debug\net6.0\",
+                WorkingDirectory = @"../../../../Ascentis.SignalR.Kafka.IntegrationTests.Server/bin/Release/net6.0/",
                 FileName = @"Ascentis.SignalR.Kafka.IntegrationTests.Server.exe",
                 UseShellExecute = true,
                 CreateNoWindow = false,
