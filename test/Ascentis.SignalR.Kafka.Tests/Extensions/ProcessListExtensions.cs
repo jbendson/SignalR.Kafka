@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 
 namespace Ascentis.SignalR.Kafka.IntegrationTests.Extensions;
 
@@ -8,17 +9,17 @@ public static class ProcessListExtensions
 {
     public static void InitServers(this List<Process> servers, int[] ports)
     {
-        Console.WriteLine($"Launched from {Environment.CurrentDirectory}");
-        Console.WriteLine($"Physical location {AppDomain.CurrentDomain.BaseDirectory}");
-        Console.WriteLine($"AppContext.BaseDir {AppContext.BaseDirectory}");
-        Console.WriteLine($"Runtime Call {System.IO.Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName)}");
+        var currentDirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
+        var workingDirectory = Path.Combine(new string[] { currentDirectory, "../../../../Ascentis.SignalR.Kafka.IntegrationTests.Server/bin/Release/net6.0/" });
+        var serverPath = Path.Combine(new string[] { currentDirectory, "../../../../Ascentis.SignalR.Kafka.IntegrationTests.Server/bin/Release/net6.0/", "Ascentis.SignalR.Kafka.IntegrationTests.Server.exe" });
+        Console.WriteLine(serverPath);
 
         foreach (var port in ports)
         {
             var processStartInfo = new ProcessStartInfo
             {
-                WorkingDirectory = @"../../../../Ascentis.SignalR.Kafka.IntegrationTests.Server/bin/Release/net6.0/",
-                FileName = @"../../../../Ascentis.SignalR.Kafka.IntegrationTests.Server/bin/Release/net6.0/Ascentis.SignalR.Kafka.IntegrationTests.Server.exe",
+                WorkingDirectory = workingDirectory,
+                FileName = serverPath,
                 UseShellExecute = false,
                 CreateNoWindow = false,
                 Arguments = port.ToString(),
