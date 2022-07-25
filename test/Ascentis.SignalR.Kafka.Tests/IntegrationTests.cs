@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Ascentis.SignalR.Kafka.IntegrationTests.Extensions;
+using Ascentis.SignalR.Kafka.IntegrationTests.Helpers;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -83,8 +84,7 @@ public class IntegrationTests
 
     private static void InitServers()
     {
-        _servers = new List<Process>();
-        _servers.InitServers(_ports);
+        _servers = ServerProcessHelpers.InitServers(_ports);
 
         foreach (var server in _servers)
         {
