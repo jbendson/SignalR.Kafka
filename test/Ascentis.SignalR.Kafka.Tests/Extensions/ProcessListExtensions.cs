@@ -10,16 +10,15 @@ public static class ProcessListExtensions
     public static void InitServers(this List<Process> servers, int[] ports)
     {
         var currentDirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
-        var workingDirectory = Path.Join(new string[] { currentDirectory, "../../../../Ascentis.SignalR.Kafka.IntegrationTests.Server/bin/Release/net6.0/" });
-        var serverPath = Path.Join(new string[] { currentDirectory, "../../../../Ascentis.SignalR.Kafka.IntegrationTests.Server/bin/Release/net6.0/", "Ascentis.SignalR.Kafka.IntegrationTests.Server.exe" });
-        Console.WriteLine(serverPath);
+        var workingDirectory = Path.Combine(new string[] { currentDirectory, "../../../../Ascentis.SignalR.Kafka.IntegrationTests.Server/bin/Release/net6.0/" });
+        var serverPath = Path.Combine(new string[] { currentDirectory, "../../../../Ascentis.SignalR.Kafka.IntegrationTests.Server/bin/Release/net6.0/", "Ascentis.SignalR.Kafka.IntegrationTests.Server.exe" });
 
         foreach (var port in ports)
         {
             var processStartInfo = new ProcessStartInfo
             {
-                WorkingDirectory = "/home/runner/work/SignalR.Kafka/SignalR.Kafka/test/Ascentis.SignalR.Kafka.IntegrationTests.Server/bin/Release/net6.0/",
-                FileName = "/home/runner/work/SignalR.Kafka/SignalR.Kafka/test/Ascentis.SignalR.Kafka.IntegrationTests.Server/bin/Release/net6.0/Ascentis.SignalR.Kafka.IntegrationTests.Server.dll",
+                WorkingDirectory = workingDirectory,
+                FileName = serverPath,
                 UseShellExecute = false,
                 CreateNoWindow = false,
                 Arguments = port.ToString(),
