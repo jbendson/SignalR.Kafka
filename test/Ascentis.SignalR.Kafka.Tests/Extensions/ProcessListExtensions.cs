@@ -10,8 +10,8 @@ public static class ProcessListExtensions
     public static void InitServers(this List<Process> servers, int[] ports)
     {
         var currentDirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
-        var workingDirectory = Path.Combine(new string[] { currentDirectory, "../../../../Ascentis.SignalR.Kafka.IntegrationTests.Server/bin/Release/net6.0/" });
-        var serverPath = Path.Combine(new string[] { currentDirectory, "../../../../Ascentis.SignalR.Kafka.IntegrationTests.Server/bin/Release/net6.0/", "Ascentis.SignalR.Kafka.IntegrationTests.Server.exe" });
+        var workingDirectory = Path.Join(new string[] { currentDirectory, "../../../../Ascentis.SignalR.Kafka.IntegrationTests.Server/bin/Release/net6.0/" });
+        var serverPath = Path.Join(new string[] { currentDirectory, "../../../../Ascentis.SignalR.Kafka.IntegrationTests.Server/bin/Release/net6.0/", "Ascentis.SignalR.Kafka.IntegrationTests.Server.exe" });
         Console.WriteLine(serverPath);
 
         foreach (var port in ports)
