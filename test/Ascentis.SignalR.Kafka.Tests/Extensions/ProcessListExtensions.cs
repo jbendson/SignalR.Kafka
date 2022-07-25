@@ -18,8 +18,8 @@ public static class ProcessListExtensions
         {
             var processStartInfo = new ProcessStartInfo
             {
-                WorkingDirectory = workingDirectory,
-                FileName = serverPath,
+                WorkingDirectory = "/home/runner/work/SignalR.Kafka/SignalR.Kafka/test/Ascentis.SignalR.Kafka.IntegrationTests.Server/bin/Release/net6.0/",
+                FileName = "/home/runner/work/SignalR.Kafka/SignalR.Kafka/test/Ascentis.SignalR.Kafka.IntegrationTests.Server/bin/Release/net6.0/Ascentis.SignalR.Kafka.IntegrationTests.Server.dll",
                 UseShellExecute = false,
                 CreateNoWindow = false,
                 Arguments = port.ToString(),
