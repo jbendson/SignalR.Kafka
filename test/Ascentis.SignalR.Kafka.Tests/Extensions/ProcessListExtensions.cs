@@ -11,7 +11,7 @@ public static class ProcessListExtensions
         Console.WriteLine($"Launched from {Environment.CurrentDirectory}");
         Console.WriteLine($"Physical location {AppDomain.CurrentDomain.BaseDirectory}");
         Console.WriteLine($"AppContext.BaseDir {AppContext.BaseDirectory}");
-        Console.WriteLine($"Runtime Call {Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName)}");
+        Console.WriteLine($"Runtime Call {System.IO.Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName)}");
 
         foreach (var port in ports)
         {
