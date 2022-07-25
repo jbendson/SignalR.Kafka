@@ -1,7 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Threading;
 
-namespace Ascentis.SignalR.Kafka.IntegrationTests;
+namespace Ascentis.SignalR.Kafka.IntegrationTests.Helpers;
 
 internal class MessageManager
 {
@@ -16,7 +16,7 @@ internal class MessageManager
             queue.Enqueue(message);
             Interlocked.Increment(ref _internalId);
             return queue;
-        }, (key, queue) => 
+        }, (key, queue) =>
         {
             queue.Enqueue(message);
             Interlocked.Increment(ref _internalId);

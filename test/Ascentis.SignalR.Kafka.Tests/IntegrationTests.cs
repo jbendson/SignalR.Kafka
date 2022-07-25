@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Ascentis.SignalR.Kafka.IntegrationTests.Extensions;
+using Ascentis.SignalR.Kafka.IntegrationTests.Helpers;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -82,23 +84,12 @@ public class IntegrationTests
 
     private static void InitServers()
     {
-        _servers = new List<Process>();
-        foreach (var port in _ports)
-        {
-            var processStartInfo = new ProcessStartInfo
-            {
-                WorkingDirectory = @"..\..\..\..\Ascentis.SignalR.Kafka.IntegrationTests.Server\bin\Debug\net6.0\",
-                FileName = @"Ascentis.SignalR.Kafka.IntegrationTests.Server.exe",
-                UseShellExecute = true,
-                CreateNoWindow = false,
-                Arguments = port.ToString()
-            };
+        _servers = ServerProcessHelpers.InitServers(_ports);
 
-            var server = Process.Start(processStartInfo);
+        foreach (var server in _servers)
+        {
             if (server == null)
                 Assert.Fail("server process not started");
-
-            _servers.Add(server);
         }
     }
 
