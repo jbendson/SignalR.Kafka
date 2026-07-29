@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -16,7 +18,7 @@ public class PerformanceTests
     private const int RpcWait = 1000;
     private const int StartupWait = 5000;
     private static List<Process> _servers = new();
-    private static readonly SemaphoreSlim _testLock = new (1);
+    private static readonly SemaphoreSlim _testLock = new(1);
     private readonly int ConnectionCount = 6;
     private ConnectionManager _connectionManager;
     private MessageManager _messageManager;
@@ -53,7 +55,7 @@ public class PerformanceTests
             {
                 _messageManager.EnqueueMessage(connectionId, message);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 TestContext.WriteLine(ex.Message);
                 throw;
@@ -92,15 +94,18 @@ public class PerformanceTests
     private static void InitServers()
     {
         _servers = new List<Process>();
+        var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+        string workingDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, @"../../../../Ascentis.SignalR.Kafka.IntegrationTests.Server/bin/Debug/net10.0/"));
+
         foreach (var port in _ports)
         {
             var processStartInfo = new ProcessStartInfo
             {
-                WorkingDirectory = @"..\..\..\..\Ascentis.SignalR.Kafka.IntegrationTests.Server\bin\Debug\net10.0\",
-                FileName = @"Ascentis.SignalR.Kafka.IntegrationTests.Server.exe",
-                UseShellExecute = true,
+                WorkingDirectory = workingDir,
+                FileName = isWindows ? "Ascentis.SignalR.Kafka.IntegrationTests.Server.exe" : "dotnet",
+                Arguments = isWindows ? port.ToString() : $"Ascentis.SignalR.Kafka.IntegrationTests.Server.dll {port}",
+                UseShellExecute = isWindows,
                 CreateNoWindow = false,
-                Arguments = port.ToString()
             };
 
             var server = Process.Start(processStartInfo);
@@ -129,15 +134,16 @@ public class PerformanceTests
         {
             var port = _ports[i % _ports.Length];
             var connection = new HubConnectionBuilder()
-                .WithUrl($"http://localhost:{port}/testHub/", options => 
-                    { 
+                .WithUrl($"http://localhost:{port}/testHub/", options =>
+                    {
                         options.Headers = new Dictionary<string, string> { { "TestAuthHeader", $"user{i}" } };
                     })
                 .Build();
 
             await connection.StartAsync();
 
-            connection.On("ReceiveMessage", (string message) => {
+            connection.On("ReceiveMessage", (string message) =>
+            {
                 receiveAction(connection.ConnectionId, message);
             });
 
@@ -195,7 +201,7 @@ public class PerformanceTests
 
         const int messagesPerConnection = 10000;
         int pairs = ConnectionCount / 2;
-        
+
         await PrimeServers();
         var startTime = DateTime.UtcNow;
         var tasks = new List<Task>
@@ -224,7 +230,7 @@ public class PerformanceTests
     {
         var logTime = DateTime.UtcNow;
         var startTime = DateTime.UtcNow;
-        
+
         while (_messageManager.LifetimeEnqueued() < expectedMessages && (DateTime.UtcNow - startTime).TotalMilliseconds < ConnectionCount * RpcWait * 10)
         {
             if (DateTime.UtcNow - logTime >= TimeSpan.FromMilliseconds(1000))

@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -89,15 +91,18 @@ public class IntegrationTests
     private static void InitServers()
     {
         _servers = new List<Process>();
+        var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+        string workingDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, @"../../../../Ascentis.SignalR.Kafka.IntegrationTests.Server/bin/Debug/net10.0/"));
+
         foreach (var port in _ports)
         {
             var processStartInfo = new ProcessStartInfo
             {
-                WorkingDirectory = @"..\..\..\..\Ascentis.SignalR.Kafka.IntegrationTests.Server\bin\Debug\net10.0\",
-                FileName = @"Ascentis.SignalR.Kafka.IntegrationTests.Server.exe",
-                UseShellExecute = true,
+                WorkingDirectory = workingDir,
+                FileName = isWindows ? "Ascentis.SignalR.Kafka.IntegrationTests.Server.exe" : "dotnet",
+                Arguments = isWindows ? port.ToString() : $"Ascentis.SignalR.Kafka.IntegrationTests.Server.dll {port}",
+                UseShellExecute = isWindows,
                 CreateNoWindow = false,
-                Arguments = port.ToString()
             };
 
             var server = Process.Start(processStartInfo);
