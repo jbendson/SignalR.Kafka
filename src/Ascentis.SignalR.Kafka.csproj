@@ -1,38 +1,31 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Authors>Joshua Bendson</Authors>
     <Company />
     <Description>An Apache Kafka backplane for ASP.NET Core SignalR</Description>
     <RepositoryUrl>https://github.com/jbendson/SignalR.Kafka</RepositoryUrl>
     <PackageTags>aspnetcore;signalr;kafka;backplane</PackageTags>
-	<Version>1.0.7</Version>
+    <Version>1.0.7</Version>
   </PropertyGroup>
-
   <ItemGroup>
     <None Include="..\nuget-README.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
-	
   <ItemGroup>
-	<FrameworkReference Include="Microsoft.AspNetCore.App" />	
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="Confluent.Kafka" Version="1.9.0" />
     <PackageReference Include="MessagePack" Version="2.3.85" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
-    <PackageReference Include="system.buffers" Version="4.5.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.10" />
   </ItemGroup>
-
   <PropertyGroup>
-	<PackageLicenseExpression>MIT</PackageLicenseExpression>
-	<PackageReadmeFile>nuget-README.md</PackageReadmeFile>
-	<PackageId>SignalR.Kafka</PackageId>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>nuget-README.md</PackageReadmeFile>
+    <PackageId>SignalR.Kafka</PackageId>
   </PropertyGroup>
-
 </Project>
