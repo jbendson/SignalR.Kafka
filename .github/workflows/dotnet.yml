@@ -17,13 +17,6 @@ jobs:
         uses: actions/setup-dotnet@v2
         with:
           dotnet-version: 10.0.x
-      - name: Setup Bitnami Kafka
-        uses: bbcCorp/kafka-actions@v1
-        with:
-          kafka version: latest
-          zookeeper version: latest
-          kafka port: 9092
-          zookeeper port: 2181
       - name: Restore dependencies
         run: dotnet restore
       - name: Build

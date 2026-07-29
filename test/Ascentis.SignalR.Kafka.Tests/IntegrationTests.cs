@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Testcontainers.Kafka;
 
 namespace Ascentis.SignalR.Kafka.IntegrationTests;
 
@@ -18,17 +19,22 @@ public class IntegrationTests
     private const int GroupConnectionCount = 3;
     private readonly int ConnectionCount = 5;
     private static List<Process> _servers = new();
-    private static readonly SemaphoreSlim _testLock = new (1);
+    private static readonly SemaphoreSlim _testLock = new(1);
     private SemaphoreSlim _lockObj;
     private ConnectionManager _connectionManager;
     private MessageManager _messageManager;
     private string _message;
+    private static KafkaContainer _kafkaContainer;
 
     public TestContext TestContext { get; set; }
 
     [ClassInitialize]
-    public static void ClassInitialize(TestContext _)
+    public static async Task ClassInitialize(TestContext context)
     {
+        _kafkaContainer = new KafkaBuilder("confluentinc/cp-kafka:6.2.10")
+                .WithPortBinding(9092)
+                .Build();
+        await _kafkaContainer.StartAsync(context.CancellationToken);
         CleanupServers();
         InitServers();
         // wait for server startup
@@ -57,7 +63,7 @@ public class IntegrationTests
                 _messageManager.EnqueueMessage(connectionId, message);
                 _lockObj.Release();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 TestContext.WriteLine(ex.Message);
                 throw;
@@ -121,8 +127,8 @@ public class IntegrationTests
         {
             var port = _ports[i % _ports.Length];
             var connection = new HubConnectionBuilder()
-                .WithUrl($"http://localhost:{port}/testHub/", options => 
-                    { 
+                .WithUrl($"http://localhost:{port}/testHub/", options =>
+                    {
                         options.Headers = new Dictionary<string, string> { { "TestAuthHeader", $"user{i}" } };
                     })
                 .Build();
@@ -130,7 +136,8 @@ public class IntegrationTests
             await connection.StartAsync();
             await lockObj.WaitAsync();
 
-            connection.On("ReceiveMessage", (string message) => {
+            connection.On("ReceiveMessage", (string message) =>
+            {
                 receiveAction(connection.ConnectionId, message);
             });
 
@@ -153,7 +160,7 @@ public class IntegrationTests
             var id = rnd.Next(0, connections.Count);
             if (ids.Contains(id))
                 continue;
-                
+
             results.Add(connections[id]);
             ids.Add(id);
         }
@@ -200,7 +207,7 @@ public class IntegrationTests
     public async Task SendAll()
     {
         await _connectionManager.First().InvokeAsync("SendAll", _message);
-            
+
         foreach (var _ in _connectionManager)
             await _lockObj.WaitAsync(RpcWait);
 
@@ -373,7 +380,7 @@ public class IntegrationTests
         foreach (var connection in groupConnections)
             await connection.InvokeAsync("AddGroup", group);
 
-        await _connectionManager.First().InvokeAsync("SendGroupExcept", new [] { groupConnections.First().ConnectionId }, group, _message);
+        await _connectionManager.First().InvokeAsync("SendGroupExcept", new[] { groupConnections.First().ConnectionId }, group, _message);
 
         var includedConnections = groupConnections.Skip(1).Take(groupConnections.Count - 1).ToList();
         foreach (var _ in includedConnections)
@@ -395,7 +402,7 @@ public class IntegrationTests
     public async Task SendGroup_NonExisting()
     {
         var group = Guid.NewGuid().ToString();
-            
+
         await _connectionManager.First().InvokeAsync("SendGroup", group, _message);
         await Task.Delay(RpcWait);
         Assert.AreEqual(0, _messageManager.LifetimeEnqueued());
