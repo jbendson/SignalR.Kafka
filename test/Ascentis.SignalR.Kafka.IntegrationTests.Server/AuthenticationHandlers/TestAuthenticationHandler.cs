@@ -15,7 +15,7 @@ public class TestAuthenticationHandler
 {
     public static readonly string SchemeName = "TestAuthScheme";
 
-    public TestAuthenticationHandler(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder, ISystemClock clock) : base(options, logger, encoder, clock)
+    public TestAuthenticationHandler(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder) : base(options, logger, encoder)
     {
     }
 
@@ -41,7 +41,7 @@ public class TestAuthenticationHandler
         }
         catch (Exception e)
         {
-            Logger.Log(LogLevel.Error, e, "Exception building authentication ticket", headerValue);
+            Logger.LogError(e, "Exception building authentication ticket: {AuthTokenHeader}", headerValue);
             return Task.FromResult(AuthenticateResult.Fail(authenticationFailure));
         }
     }

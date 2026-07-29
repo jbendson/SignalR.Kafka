@@ -1,6 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
-using System;
+﻿using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace Ascentis.SignalR.Kafka.Extensions
 {
@@ -14,7 +14,7 @@ namespace Ascentis.SignalR.Kafka.Extensions
             }
             catch (Exception ex)
             {
-                logger.LogError("FireAndForget exception", ex);
+                logger.LogError(ex, "FireAndForget exception");
             }
         }
     }
