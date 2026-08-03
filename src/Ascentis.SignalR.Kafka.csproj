@@ -1,13 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Authors>Joshua Bendson</Authors>
     <Company />
     <Description>An Apache Kafka backplane for ASP.NET Core SignalR</Description>
     <RepositoryUrl>https://github.com/jbendson/SignalR.Kafka</RepositoryUrl>
     <PackageTags>aspnetcore;signalr;kafka;backplane</PackageTags>
-    <Version>1.0.8</Version>
+    <Version>2.0.0</Version>
   </PropertyGroup>
   <ItemGroup>
     <None Include="..\nuget-README.md">

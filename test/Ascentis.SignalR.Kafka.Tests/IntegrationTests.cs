@@ -8,7 +8,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Testcontainers.Kafka;
 
 namespace Ascentis.SignalR.Kafka.IntegrationTests;
 
@@ -26,17 +25,12 @@ public class IntegrationTests
     private ConnectionManager _connectionManager;
     private MessageManager _messageManager;
     private string _message;
-    private static KafkaContainer _kafkaContainer;
 
     public TestContext TestContext { get; set; }
 
     [ClassInitialize]
-    public static async Task ClassInitialize(TestContext context)
+    public static void ClassInitialize(TestContext _)
     {
-        _kafkaContainer = new KafkaBuilder("confluentinc/cp-kafka:6.2.10")
-                .WithPortBinding(9092)
-                .Build();
-        await _kafkaContainer.StartAsync(context.CancellationToken);
         CleanupServers();
         InitServers();
         // wait for server startup
