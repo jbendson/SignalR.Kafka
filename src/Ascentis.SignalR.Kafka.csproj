@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Authors>Joshua Bendson</Authors>
     <Company />
     <Description>An Apache Kafka backplane for ASP.NET Core SignalR</Description>
