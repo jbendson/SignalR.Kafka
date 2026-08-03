@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="Directory.Packages.props" />
+  </Folder>
+  <Project Path="src/Ascentis.SignalR.Kafka.csproj" />
+  <Project Path="test/Ascentis.SignalR.Kafka.IntegrationTests.Server/Ascentis.SignalR.Kafka.IntegrationTests.Server.csproj" />
+  <Project Path="test/Ascentis.SignalR.Kafka.Tests/Ascentis.SignalR.Kafka.IntegrationTests.csproj" />
+</Solution>
